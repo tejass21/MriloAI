@@ -1,0 +1,410 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+ 
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+ 
+    --primary: 248 90% 66%;
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+ 
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+ 
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+ 
+    --radius: 1rem;
+
+    /* Distinct colors for user and AI messages */
+    --chat-user: 0 0% 50%; /* Changed from blue (210 100% 50%) to gray */
+    --chat-user-foreground: 0 0% 100%;
+    --chat-ai: 0 0% 97%;
+    --chat-ai-foreground: 222.2 84% 4.9%;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    
+    /* Distinct colors for user and AI messages in dark mode */
+    --chat-user: 0 0% 60%; /* Changed from blue (210 100% 50%) to gray */
+    --chat-user-foreground: 0 0% 100%;
+    --chat-ai: 240 3.7% 15.9%;
+    --chat-ai-foreground: 0 0% 98%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased dark:bg-[#121212];
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Fix iOS height issues */
+  html, body, #root {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Improved mobile viewport handling */
+  @supports (-webkit-touch-callout: none) {
+    .h-[100dvh] {
+      height: 100dvh;
+    }
+  }
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1A1A1A;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2A2A2A;
+  border-radius: 4px;
+  border: 2px solid #1A1A1A;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8B5CF6;
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2A2A2A #1A1A1A;
+}
+
+.typing-indicator {
+  @apply flex gap-1.5 items-center justify-center py-2 px-3;
+}
+
+.typing-indicator span {
+  @apply w-2 h-2 rounded-full bg-[#00FFD1]/30;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(0.75);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Gradient Animation */
+@keyframes gradient-animation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animated-gradient {
+  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+  background-size: 400% 400%;
+  animation: gradient-animation 15s ease infinite;
+}
+
+@keyframes typing {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1.0);
+  }
+}
+
+/* ChatGPT-like styling */
+.chatgpt-layout {
+  @apply flex flex-col h-full bg-white;
+}
+
+.chatgpt-sidebar {
+  @apply w-64 bg-[#f7f7f8] border-r border-gray-200 hidden lg:block;
+}
+
+.chatgpt-content {
+  @apply flex-1 flex flex-col overflow-hidden;
+}
+
+.chatgpt-messages {
+  @apply flex-1 overflow-y-auto;
+}
+
+.chatgpt-message-ai {
+  @apply bg-[#f7f7f8] p-4 border-b border-gray-200;
+}
+
+.chatgpt-message-user {
+  @apply bg-white p-4 border-b border-gray-200;
+}
+
+.chatgpt-input-container {
+  @apply border-t border-gray-200 p-4;
+}
+
+/* Fix for mobile */
+@media (max-width: 639px) {
+  .xs\:max-w-\[95\%\] {
+    max-width: 95%;
+  }
+}
+
+/* Dark mode styling for chat interface */
+.dark .chatgpt-sidebar {
+  @apply bg-[#1A1A1A] border-[#2A2A2A];
+}
+
+.dark .chatgpt-messages {
+  @apply bg-[#121212];
+}
+
+.dark .chatgpt-message-ai {
+  @apply bg-[#1A1A1A] border-[#2A2A2A];
+}
+
+.dark .chatgpt-message-user {
+  @apply bg-[#121212] border-[#2A2A2A];
+}
+
+.dark .chatgpt-input-container {
+  @apply border-[#2A2A2A];
+}
+
+.omniplex-sidebar-item {
+  @apply w-full px-3 py-2.5 text-left text-sm transition-colors
+         hover:bg-[#8B5CF6]/10 flex items-center gap-2 rounded-lg
+         text-gray-300 hover:text-white;
+}
+
+.omniplex-sidebar-item.active {
+  @apply bg-[#8B5CF6]/20 text-white;
+}
+
+.omniplex-sidebar-heading {
+  @apply text-xs uppercase font-medium text-gray-400 dark:text-gray-500 px-3 pt-5 pb-2;
+}
+
+/* Animation for welcome text */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in-animation {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+/* Improved bullet point styles */
+.leading-relaxed ul {
+  padding-left: 1.5rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.leading-relaxed li {
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+
+/* Better spacing for AI message content */
+.chat-ai {
+  @apply p-5;
+  line-height: 1.6;
+}
+
+.chat-ai p {
+  margin-bottom: 1rem;
+}
+
+/* Bullet point styling */
+.chat-ai ul {
+  padding-left: 1.5rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.chat-ai li {
+  margin-bottom: 0.75rem;
+  position: relative;
+}
+
+/* Message animations */
+@keyframes slideInBottom {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-slide-in-bottom {
+  animation: slideInBottom 0.5s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Enhanced message styling */
+.chat-ai {
+  @apply relative overflow-hidden;
+}
+
+.chat-ai::before {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0;
+  transform: translateX(-100%);
+  transition: transform 0.6s ease-in-out, opacity 0.6s ease-in-out;
+}
+
+.chat-ai:hover::before {
+  opacity: 1;
+  transform: translateX(100%);
+}
+
+/* Improved code block styling */
+.code-block {
+  @apply relative overflow-hidden rounded-lg;
+  transition: transform 0.3s ease-in-out;
+}
+
+.code-block:hover {
+  transform: scale(1.01);
+}
+
+.code-block::after {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-r from-[#00FFD1]/0 via-[#00FFD1]/5 to-[#00FFD1]/0;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.code-block:hover::after {
+  opacity: 1;
+}
+
+/* Responsive text sizes */
+@media (max-width: 640px) {
+  .text-4xl {
+    font-size: 1.875rem;
+  }
+  .text-5xl {
+    font-size: 2.25rem;
+  }
+}
+
+/* Improved mobile touch targets */
+@media (max-width: 640px) {
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Better form element spacing on mobile */
+@media (max-width: 640px) {
+  input, textarea, select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
+
+/* Improved modal responsiveness */
+.modal-content {
+  @apply w-[95%] sm:w-[90%] md:w-[80%] lg:w-[70%] max-w-4xl mx-auto;
+}
+
+/* Better table responsiveness */
+@media (max-width: 640px) {
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
