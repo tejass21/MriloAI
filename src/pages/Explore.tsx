@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Filter, Bookmark, Share2, MoreVertical, ArrowLeft } from 'lucide-react';
 import TeamWorkspace from '../components/explore/TeamWorkspace';
@@ -7,8 +7,23 @@ import { useNavigate } from 'react-router-dom';
 
 export const Explore = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showFilter, setShowFilter] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(() => {
+    // Initialize from localStorage or default to empty string
+    return localStorage.getItem('exploreSearchQuery') || '';
+  });
+  const [showFilter, setShowFilter] = useState(() => {
+    // Initialize from localStorage or default to false
+    return localStorage.getItem('exploreShowFilter') === 'true';
+  });
+
+  // Save to localStorage whenever values change
+  useEffect(() => {
+    localStorage.setItem('exploreSearchQuery', searchQuery);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    localStorage.setItem('exploreShowFilter', showFilter.toString());
+  }, [showFilter]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);

@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Search } from "lucide-react";
 import { motion } from "framer-motion";
+import debounce from "lodash/debounce";
 
 interface WikiResult {
   title: string;
@@ -18,6 +19,58 @@ export const WikipediaSearch = () => {
   const [loading, setLoading] = useState(false);
   const [totalHits, setTotalHits] = useState(0);
   const [error, setError] = useState<string | null>(null);
+
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    debounce(async (searchQuery: string) => {
+      if (!searchQuery.trim()) {
+        setResults([]);
+        setTotalHits(0);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(
+          `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
+            searchQuery
+          )}&format=json&origin=*&srlimit=10&srinfo=totalhits`
+        );
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch data from Wikipedia');
+        }
+
+        const data = await response.json();
+        
+        if (data.error) {
+          throw new Error(data.error.info || 'An error occurred while searching');
+        }
+
+        setResults(data.query.search);
+        setTotalHits(data.query.searchinfo.totalhits);
+      } catch (error) {
+        console.error("Error fetching Wikipedia data:", error);
+        setError(error instanceof Error ? error.message : 'An error occurred while searching');
+        setResults([]);
+        setTotalHits(0);
+      } finally {
+        setLoading(false);
+      }
+    }, 300),
+    []
+  );
+
+  // Effect to trigger search when query changes
+  useEffect(() => {
+    debouncedSearch(query);
+    // Cleanup function to cancel pending debounced calls
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [query, debouncedSearch]);
 
   const formatDate = (timestamp: string) => {
     return new Date(timestamp).toLocaleDateString("en-US", {
@@ -43,37 +96,6 @@ export const WikipediaSearch = () => {
     return cleanSnippet;
   };
 
-  const searchWikipedia = async () => {
-    if (!query.trim()) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(
-        `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
-          query
-        )}&format=json&origin=*&srlimit=10&srinfo=totalhits`
-      );
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch data from Wikipedia');
-      }
-
-      const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(data.error.info || 'An error occurred while searching');
-      }
-
-      setResults(data.query.search);
-      setTotalHits(data.query.searchinfo.totalhits);
-    } catch (error) {
-      console.error("Error fetching Wikipedia data:", error);
-      setError(error instanceof Error ? error.message : 'An error occurred while searching');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[#0D0D0D] text-white p-4 sm:p-6 md:p-8">
       <div className="max-w-3xl mx-auto">
@@ -93,17 +115,10 @@ export const WikipediaSearch = () => {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && searchWikipedia()}
-              placeholder="Search Wikipedia..."
+              placeholder="Search any topic..."
               className="w-full px-4 py-3 bg-[#2A2A2A] border border-[#3A3A3A] rounded-lg text-white placeholder:text-gray-400 focus:outline-none focus:border-[#8B5CF6] focus:ring-1 focus:ring-[#8B5CF6] pr-10"
             />
-            <button
-              onClick={searchWikipedia}
-              disabled={loading}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#8B5CF6] transition-colors disabled:opacity-50"
-            >
-              <Search className="w-5 h-5" />
-            </button>
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
           </div>
 
           {/* Error Message */}
@@ -135,7 +150,7 @@ export const WikipediaSearch = () => {
                   {totalHits > 10 && " (showing top 10)"}
                 </p>
               </div>
-              <div className="max-h-[400px] overflow-y-auto">
+              <div className="max-h-[300px] overflow-y-auto">
                 {results.map((result) => (
                   <motion.a
                     key={result.pageid}
@@ -147,7 +162,7 @@ export const WikipediaSearch = () => {
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="text-white font-medium mb-1 group-hover:text-[#8B5CF6] transition-colors">
+                        <h3 className="text-white font-medium mb-1 hover:text-[#8B5CF6] transition-colors">
                           {result.title}
                         </h3>
                         <p
@@ -200,7 +215,7 @@ export const WikipediaSearch = () => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-center py-12"
+              className="text-center py-6"
             >
               <p className="text-gray-400">Type something to search Wikipedia</p>
             </motion.div>

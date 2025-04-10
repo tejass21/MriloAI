@@ -9,6 +9,7 @@ import { useChat } from "@/hooks/use-chat";
 import { ActionType } from "@/types/action";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { Footer } from "@/components/layout/Footer";
 
 const Index = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -102,7 +103,7 @@ const Index = () => {
         <div className="flex-1 relative overflow-hidden">
           <div 
             ref={chatContainerRef}
-            className="absolute inset-0 overflow-y-auto scrollbar-thin"
+            className="absolute inset-0 overflow-y-auto scrollbar-thin pb-32"
           >
             <div className="flex flex-col min-h-full">
               {messages.length === 0 ? (
@@ -122,7 +123,7 @@ const Index = () => {
                     <p className="text-gray-600 dark:text-gray-400 text-lg mb-8 max-w-xl fade-in-animation delay-100">
                       Experience the next generation of AI assistance. Ask anything, get intelligent answers.
                     </p>
-                    
+
                     <div className="w-full max-w-2xl mx-auto mb-12 fade-in-animation delay-200 relative group">
                       {/* Animated focus ring */}
                       <div className="absolute -inset-0.5 bg-gradient-to-r from-[#8B5CF6]/0 via-[#8B5CF6]/30 to-[#8B5CF6]/0 rounded-2xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity animate-gradient" />
@@ -164,17 +165,37 @@ const Index = () => {
                   </div>
                 </div>
               ) : (
-                <>
-                  <ChatConversation messages={messages} isLoading={isLoading} />
-                  <div className="sticky bottom-6 w-full max-w-3xl mx-auto px-4 pt-4">
-                    <ChatInput onSendMessage={handleSendMessage} disabled={isLoading} />
-                  </div>
-                </>
+                <div className="flex flex-col h-full">
+                  <ChatConversation
+                    messages={messages}
+                    isLoading={isLoading}
+                    messagesEndRef={messagesEndRef}
+                  />
+                </div>
               )}
-              <div ref={messagesEndRef} id="messages-end" className="h-32" />
             </div>
           </div>
         </div>
+
+        {/* Chat Input Section */}
+        {messages.length > 0 && (
+          <div className="relative bg-[#121212]">
+            <div className="px-4 py-4">
+              <div className="max-w-2xl mx-auto relative group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-[#8B5CF6]/0 via-[#8B5CF6]/30 to-[#8B5CF6]/0 rounded-2xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity animate-gradient" />
+                <div className="relative">
+                  <ChatInput 
+                    onSendMessage={handleSendMessage} 
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <Footer />
       </div>
     </div>
   );

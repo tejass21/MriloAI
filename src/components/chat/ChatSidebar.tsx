@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Edit, MessageSquare, Plus, Trash2, Star, StarOff, Search, MoreVertical, FolderPlus, FolderOpen, Home, Compass, Users, Library } from "lucide-react";
+import { Edit, MessageSquare, Plus, Trash2, Star, StarOff, Search, MoreVertical, FolderPlus, FolderOpen, Home, Compass, Users, Library, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";

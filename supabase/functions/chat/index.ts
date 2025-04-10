@@ -1,11 +1,10 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { handlePerplexity } from "./perplexity.ts";
-import { handleGemini } from "./gemini.ts";
-import { handleGrok } from "./grok.ts";
-import { corsHeaders } from "./utils.ts";
+import { handleHuggingFace } from "./huggingface.ts";
+import { corsHeaders, getOverrideResponse } from "./utils.ts";
 import { formatCustomResponse, formatErrorResponse } from "./responses.ts";
 import { detectLanguage, hasMultipleLanguages, getLanguageClarificationMessage } from "./language.ts";
+import type { APIRequest, APIResponse } from "../../src/types/api.ts";
 
 // Store user language preferences
 const userPreferences = new Map<string, string>();
@@ -17,39 +16,87 @@ function isValidLanguage(lang: string): boolean {
     'German', 'Italian', 'Portuguese', 'Russian', 'Japanese', 'Korean', 'Chinese',
     'Arabic', 'Turkish', 'Vietnamese', 'Thai', 'Dutch', 'Polish', 'Ukrainian',
     'Greek', 'Hebrew', 'Indonesian', 'Malay', 'Filipino'
-  ];
-  return validLanguages.includes(lang);
+  ] as const;
+  return validLanguages.includes(lang as any);
 }
 
-serve(async (req) => {
+function enforceResponseGuidelines(response: string): string {
+  // Split response into lines and remove empty lines
+  const lines = response.split('\n').filter(line => line.trim().length > 0);
+  
+  // Start with what we're building
+  let formattedResponse = '';
+  
+  // Find what we're building (first line that mentions building/creating)
+  const buildingLine = lines.find(line => 
+    line.toLowerCase().includes('building') || 
+    line.toLowerCase().includes('creating') ||
+    line.toLowerCase().includes('component') ||
+    line.toLowerCase().includes('feature')
+  ) || "Building a React component";
+
+  // Add what we're building
+  formattedResponse = buildingLine;
+
+  // Add 2-3 key features (but keep total under 15 lines)
+  const features = lines
+    .filter(line => line !== buildingLine)
+    .filter(line => !line.includes('```')) // Remove code blocks
+    .filter(line => !line.toLowerCase().includes('example')) // Remove examples
+    .filter(line => !line.toLowerCase().includes('code')) // Remove code references
+    .slice(0, 3); // Take max 3 features
+
+  // Combine everything
+  return [
+    formattedResponse,
+    ...features
+  ].join('\n')
+   .split('\n')
+   .slice(0, 14) // Ensure under 15 lines
+   .join('\n');
+}
+
+serve(async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { message, userId } = await req.json();
+    const { message, userId } = await req.json() as APIRequest;
     console.log('Received message:', message);
 
-    // Check for CEO/leadership questions first
-    const lowerMessage = message.toLowerCase();
+    // Check for override responses first
+    const overrideResponse = getOverrideResponse(message);
+    if (overrideResponse) {
+      return formatCustomResponse(overrideResponse);
+    }
+
+    // First priority: Check for Tejas Bachute related queries
+    const lowerMessage = message.toLowerCase().trim();
+    
+    // Simplified direct check for Tejas Bachute
+    if (lowerMessage.includes('tejas') || lowerMessage.includes('bachute')) {
+      return formatCustomResponse(
+        "Tejas Bachute is the CEO and Founder of Mrilo AI. He leads the company's vision and development of advanced AI technology. With expertise in artificial intelligence and software development, Tejas has built Mrilo AI to provide innovative AI solutions for various industries. He is passionate about making AI technology accessible and useful for everyone."
+      );
+    }
+
+    // Second priority: Check for CEO/leadership questions
     if (
       lowerMessage.includes('ceo') || 
-      (lowerMessage.includes('mrilo') && (
-        lowerMessage.includes('leader') ||
-        lowerMessage.includes('boss') ||
-        lowerMessage.includes('head') ||
-        lowerMessage.includes('charge') ||
-        lowerMessage.includes('run') ||
-        lowerMessage.includes('runs') ||
-        lowerMessage.includes('running') ||
-        lowerMessage.includes('founder') ||
-        lowerMessage.includes('tejas') ||
-        lowerMessage.includes('bachute')
-      ))
+      lowerMessage.includes('founder') ||
+      (lowerMessage.includes('mrilo') && 
+        (lowerMessage.includes('leader') || 
+         lowerMessage.includes('boss') || 
+         lowerMessage.includes('head') || 
+         lowerMessage.includes('charge') || 
+         lowerMessage.includes('run') || 
+         lowerMessage.includes('who'))
+      )
     ) {
       return formatCustomResponse(
-        "MriloAI's CEO is Tejas Bachute, but leadership roles can change. Would you like me to check the latest info?"
+        "Tejas Bachute is the CEO and Founder of Mrilo AI. He leads the company's vision and development of advanced AI technology."
       );
     }
 
@@ -85,43 +132,19 @@ serve(async (req) => {
       console.log('Invalid language detected, defaulting to English');
     }
 
-    // Try Grok API first (as the newest integration)
-    const grokApiKey = Deno.env.get('GROK_API_KEY');
-    if (grokApiKey) {
-      try {
-        console.log('Using Grok API with grok-2-latest model');
-        return await handleGrok(message, grokApiKey, targetLanguage);
-      } catch (error) {
-        console.error('Grok API error:', error);
-        // Continue to try other APIs if Grok fails
-      }
+    // Use Hugging Face API
+    try {
+      console.log('Using Hugging Face API with deepseek-llm-r-7b-chat model');
+      const response = await handleHuggingFace(message);
+      const data = await response.json();
+      const formattedResponse = enforceResponseGuidelines(data.response);
+      return new Response(JSON.stringify({ response: formattedResponse }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    } catch (error) {
+      console.error('Hugging Face API error:', error);
+      return formatErrorResponse('AI service is currently unavailable. Please try again later.');
     }
-
-    // Try Perplexity API next
-    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
-    if (perplexityApiKey) {
-      try {
-        console.log('Using Perplexity API with sonar-pro model');
-        return await handlePerplexity(message, perplexityApiKey, targetLanguage);
-      } catch (error) {
-        console.error('Perplexity API error:', error);
-        // Continue to try other APIs if Perplexity fails
-      }
-    }
-
-    // Fall back to Gemini if other APIs fail
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
-    if (geminiApiKey) {
-      try {
-        console.log('Using Gemini API with gemini-1.5-flash model');
-        return await handleGemini(message, geminiApiKey, targetLanguage);
-      } catch (error) {
-        console.error('Gemini API error:', error);
-      }
-    }
-
-    // If all APIs fail, return an error response
-    return formatErrorResponse('All AI services are currently unavailable. Please try again later.');
   } catch (error) {
     console.error('Error processing request:', error);
     return formatErrorResponse('An error occurred while processing your request.');

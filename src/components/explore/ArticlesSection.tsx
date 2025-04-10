@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Tag, ArrowRight, Sparkles, Cpu, DollarSign, Palette, Trophy, Film } from 'lucide-react';
 import { ArticleDetail } from './ArticleDetail';
@@ -345,8 +345,16 @@ const categories = [
 ];
 
 export const ArticlesSection = () => {
-  const [selectedCategory, setSelectedCategory] = useState('for-you');
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    // Initialize from localStorage or default to 'for-you'
+    return localStorage.getItem('selectedArticleCategory') || 'for-you';
+  });
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+
+  // Save to localStorage whenever category changes
+  useEffect(() => {
+    localStorage.setItem('selectedArticleCategory', selectedCategory);
+  }, [selectedCategory]);
 
   const filteredArticles = articles.filter(article => 
     selectedCategory === 'for-you' ? true : article.category === categories.find(c => c.id === selectedCategory)?.name

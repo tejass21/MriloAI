@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useUser } from '@/contexts/UserContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 declare global {
   interface Window {
@@ -15,6 +16,7 @@ interface GoogleAuthProps {
 
 export const GoogleAuth = ({ onSuccess }: GoogleAuthProps) => {
   const { setUser } = useUser();
+  const { signInWithGoogle } = useAuth();
 
   useEffect(() => {
     // Load Google Sign-In script
@@ -73,23 +75,31 @@ export const GoogleAuth = ({ onSuccess }: GoogleAuthProps) => {
     };
   }, []);
 
-  const handleGoogleSignIn = (response: any) => {
+  const handleGoogleSignIn = async (response: any) => {
     try {
       // Decode the JWT token
       const payload = decodeJwtResponse(response.credential);
       
-      // Set user data in context
+      // Generate initials from name
+      const userName = payload.name || '';
+      const initials = userName
+        .split(' ')
+        .map(word => word[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+      
+      // Set user data in context with proper profile picture URL
       setUser({
-        name: payload.name,
+        name: userName,
         email: payload.email,
-        picture: payload.picture
+        picture: payload.picture || `https://ui-avatars.com/api/?name=${initials || 'U'}&background=8B5CF6&color=fff&bold=true&length=2&rounded=true`
       });
 
       // Call onSuccess callback to close modal
       onSuccess?.();
     } catch (error) {
       console.error('Error during Google sign-in:', error);
-      // Handle error appropriately
     }
   };
 

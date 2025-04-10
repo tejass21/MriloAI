@@ -28,7 +28,6 @@ export const ChatHeader = ({
   const handleSignOut = () => {
     setUser(null);
   };
-
   return (
     <>
       <nav className="border-b border-[#2A2A2A] bg-[#1A1A1A] sticky top-0 z-30 w-full">
@@ -44,14 +43,19 @@ export const ChatHeader = ({
               <Menu size={18} className="sm:w-5 sm:h-5" />
             </Button>
             <div className="flex items-center gap-1.5 sm:gap-3">
-              <img 
-                src="/logo.svg" 
-                alt="MRILO" 
-                className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10"
-              />
-              <span className="font-semibold text-sm sm:text-base md:text-lg tracking-wide bg-gradient-to-r from-white to-[#8B5CF6] bg-clip-text text-transparent whitespace-nowrap">
-                MRILO AI
-              </span>
+              <button 
+                onClick={() => window.open('https://mrilo.netlify.app', '_self')}
+                className="flex items-center gap-1.5 sm:gap-3 hover:opacity-80 transition-opacity cursor-pointer"
+              >
+                <img 
+                  src="/logo.svg" 
+                  alt="MRILO" 
+                  className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10"
+                />
+                <span className="font-semibold text-sm sm:text-base md:text-lg tracking-wide bg-gradient-to-r from-white to-[#8B5CF6] bg-clip-text text-transparent whitespace-nowrap">
+                  MRILO AI
+                </span>
+              </button>
             </div>
           </div>
           

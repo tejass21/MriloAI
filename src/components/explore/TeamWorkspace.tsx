@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Brain, Target, Zap, Shield, BarChart, Plus, ArrowRight, CheckCircle2, Star, Clock, MessageSquare, Sparkles, Rocket, Lightbulb, Heart, X } from 'lucide-react';
 
@@ -73,10 +73,38 @@ const testimonials = [
 ];
 
 const TeamWorkspace: React.FC = () => {
-  const [selectedFeature, setSelectedFeature] = useState<number | null>(null);
+  const [selectedFeature, setSelectedFeature] = useState(() => {
+    const saved = localStorage.getItem('selectedWorkspaceFeature');
+    return saved ? parseInt(saved) : null;
+  });
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
-  const [showModal, setShowModal] = useState(false);
-  const [modalFeature, setModalFeature] = useState<typeof features[0] | null>(null);
+  const [showModal, setShowModal] = useState(() => {
+    return localStorage.getItem('workspaceShowModal') === 'true';
+  });
+  const [modalFeature, setModalFeature] = useState<typeof features[0] | null>(() => {
+    const saved = localStorage.getItem('workspaceModalFeature');
+    return saved ? features[parseInt(saved)] : null;
+  });
+
+  // Save states to localStorage whenever they change
+  useEffect(() => {
+    if (selectedFeature !== null) {
+      localStorage.setItem('selectedWorkspaceFeature', selectedFeature.toString());
+    }
+  }, [selectedFeature]);
+
+  useEffect(() => {
+    localStorage.setItem('workspaceShowModal', showModal.toString());
+  }, [showModal]);
+
+  useEffect(() => {
+    if (modalFeature) {
+      const index = features.findIndex(f => f.title === modalFeature.title);
+      if (index !== -1) {
+        localStorage.setItem('workspaceModalFeature', index.toString());
+      }
+    }
+  }, [modalFeature]);
 
   const handleFeatureClick = (feature: typeof features[0]) => {
     setModalFeature(feature);

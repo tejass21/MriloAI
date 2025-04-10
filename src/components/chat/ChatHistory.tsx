@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Folder, MessageSquare, Trash2, ChevronRight, Plus, Trash } from 'lucide-react';
 import { useChat } from '@/contexts/ChatContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ChatFolder {
   id: string;
