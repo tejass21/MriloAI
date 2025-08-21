@@ -52,6 +52,22 @@ const Index = () => {
       description: "mrilo",
       short: "⌘cmd+p",
       end: "Command",
+    },
+    {
+      id: "3",
+      label: "Translate to Hindi",
+      icon: <Globe className="h-4 w-4 text-green-500" />,
+      description: "language",
+      short: "⌘T",
+      end: "Tool",
+    },
+    {
+      id: "4",
+      label: "Transcribe audio",
+      icon: <AudioLines className="h-4 w-4 text-pink-500" />,
+      description: "audio",
+      short: "⌘⇧T",
+      end: "Tool",
     }
   ];
 
