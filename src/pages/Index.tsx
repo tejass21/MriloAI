@@ -9,7 +9,6 @@ import { useChat } from "@/hooks/use-chat";
 import { ActionType } from "@/types/action";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Footer } from "@/components/layout/Footer";
 
 const Index = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -193,9 +192,6 @@ const Index = () => {
             </div>
           </div>
         )}
-
-        {/* Footer */}
-        <Footer />
       </div>
     </div>
   );

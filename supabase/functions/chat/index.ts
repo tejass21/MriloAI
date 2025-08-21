@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { handleHuggingFace } from "./huggingface.ts";
+import { handleGemini } from "./gemini.ts";
 import { corsHeaders, getOverrideResponse } from "./utils.ts";
 import { formatCustomResponse, formatErrorResponse } from "./responses.ts";
 import { detectLanguage, hasMultipleLanguages, getLanguageClarificationMessage } from "./language.ts";
@@ -8,6 +9,18 @@ import type { APIRequest, APIResponse } from "../../src/types/api.ts";
 
 // Store user language preferences
 const userPreferences = new Map<string, string>();
+
+// Function to get Gemini API key from admin endpoint
+async function getGeminiApiKey(): Promise<string | null> {
+  try {
+    // This would be a call to your admin endpoint or environment variable
+    // For now, we'll use a hardcoded key that can be updated via admin API
+    return "AIzaSyDVQERtyIVwOSOEYgI_GFMnSSeUKyvlyCM";
+  } catch (error) {
+    console.error('Error getting Gemini API key:', error);
+    return null;
+  }
+}
 
 // Function to validate language preference
 function isValidLanguage(lang: string): boolean {
@@ -125,25 +138,44 @@ serve(async (req: Request): Promise<Response> => {
     // Get user's preferred language or detect from message
     const userLanguage = userId ? userPreferences.get(userId) : null;
     const detectedLanguage = detectLanguage(message);
-    const targetLanguage = userLanguage || detectedLanguage;
+    const targetLanguage = userLanguage || detectedLanguage || 'English';
 
     // If language detection failed or is uncertain, default to English
     if (!isValidLanguage(targetLanguage)) {
       console.log('Invalid language detected, defaulting to English');
     }
 
-    // Use Hugging Face API
+    // Try Gemini API first, then fallback to Hugging Face
     try {
-      console.log('Using Hugging Face API with deepseek-llm-r-7b-chat model');
-      const response = await handleHuggingFace(message);
-      const data = await response.json();
-      const formattedResponse = enforceResponseGuidelines(data.response);
-      return new Response(JSON.stringify({ response: formattedResponse }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      const geminiApiKey = await getGeminiApiKey();
+      
+      if (geminiApiKey) {
+        console.log('Using Gemini API as primary service');
+        const geminiResponse = await handleGemini(message, geminiApiKey, targetLanguage);
+        const data = await geminiResponse.json();
+        const formattedResponse = enforceResponseGuidelines(data.response);
+        return new Response(JSON.stringify({ response: formattedResponse }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else {
+        throw new Error('No Gemini API key configured');
+      }
     } catch (error) {
-      console.error('Hugging Face API error:', error);
-      return formatErrorResponse('AI service is currently unavailable. Please try again later.');
+      console.error('Gemini API error:', error);
+      console.log('Falling back to Hugging Face API');
+      
+      try {
+        console.log('Using Hugging Face API with deepseek-llm-r-7b-chat model');
+        const response = await handleHuggingFace(message);
+        const data = await response.json();
+        const formattedResponse = enforceResponseGuidelines(data.response);
+        return new Response(JSON.stringify({ response: formattedResponse }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } catch (huggingFaceError) {
+        console.error('Hugging Face API error:', huggingFaceError);
+        return formatErrorResponse('AI service is currently unavailable. Please try again later.');
+      }
     }
   } catch (error) {
     console.error('Error processing request:', error);

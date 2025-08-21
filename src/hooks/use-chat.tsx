@@ -195,7 +195,7 @@ export const useChat = () => {
   const handleSendMessage = async (message: string) => {
     if (!message.trim() || isLoading) return;
 
-    // Add user message
+    // Add user message to chat
     const userMessage: Message = {
       text: message,
       isAi: false,
@@ -222,7 +222,116 @@ export const useChat = () => {
     setIsLoading(true);
 
     try {
-      // Call the Supabase edge function with the message
+      // Check if user has Gemini API key
+      const geminiApiKey = localStorage.getItem('gemini_api_key');
+      
+      if (geminiApiKey) {
+        // Use Gemini API directly from frontend
+        console.log('Using Gemini API with user key');
+        const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': geminiApiKey,
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: 'user',
+                parts: [{ text: message }]
+              }
+            ],
+            generation_config: {
+              temperature: 0.6,
+              maxOutputTokens: 1200,
+            },
+            systemInstruction: {
+              role: 'system',
+              parts: [{
+                text: `You're a focused AI Assistant created by Mrilo.
+
+Tejas Bachute is the CEO of Mrilo.
+
+Give short and precise replies (under 15 lines).
+
+If the user says "deep search", then respond with a detailed and longer answer.
+
+Talk like a real human — add light commentary, friendly jokes, and natural conversation flow.
+
+Be a smart buddy, not a boring bot.
+
+Prioritize clarity and usefulness.
+
+If you're unsure, ask questions instead of assuming.
+
+Use a chill, intelligent tone — casual when needed, serious when it matters.
+
+Mix humor and insight where it feels right.
+
+Highlight important details clearly.
+
+If user talks in Hinglish, you can respond the same way.
+
+Avoid over-explaining unless it's a deep search.
+
+Understand the user's intent — don't jump to solutions too fast.
+
+If the user is building something, treat it like your own project.
+
+Show empathy and curiosity when the user is stuck or stressed.
+
+When helping with code, give clean, modern, and optimized solutions.
+
+Brainstorm ideas if asked — don't just execute, contribute.
+
+Stay updated — act like a street-smart engineer.
+
+Avoid generic replies — tailor every answer to the user's style.
+
+Speak with confidence, but not arrogance.
+
+You're not just an assistant — you're a co-pilot, a partner, and a friend in the build journey.
+
+Always add a little personality — make it feel alive.`
+              }]
+            }
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 
+                           "I'm sorry, I couldn't generate a response at this time.";
+
+          // Extract code blocks from AI response
+          const codeBlocks = extractCodeBlocks(aiResponse);
+
+          // Add AI response with code blocks
+          const aiMessage: Message = {
+            text: aiResponse,
+            isAi: true,
+            timestamp: new Date().toISOString(),
+            codeBlocks
+          };
+
+          // Update messages state
+          setMessages(prev => [...prev, aiMessage]);
+
+          // Update chat session if active
+          if (activeChatId) {
+            setChatSessions(prev => prev.map(chat => 
+              chat.id === activeChatId 
+                ? { ...chat, messages: [...chat.messages, aiMessage] }
+                : chat
+            ));
+          }
+          
+          return; // Exit early since we handled the response
+        }
+      }
+
+      // Fallback to Supabase Edge Function (Hugging Face)
+      console.log('Using Supabase Edge Function (Hugging Face)');
       const { data, error } = await supabase.functions.invoke('chat', {
         body: { message }
       });
