@@ -15,7 +15,7 @@ async function getGeminiApiKey(): Promise<string | null> {
   try {
     // This would be a call to your admin endpoint or environment variable
     // For now, we'll use a hardcoded key that can be updated via admin API
-    return "AIzaSyDVQERtyIVwOSOEYgI_GFMnSSeUKyvlyCM";
+    return "AIzaSyD86Tpg0fylXIpPZFIEu2Ym_ic-Kk_xDU0";
   } catch (error) {
     console.error('Error getting Gemini API key:', error);
     return null;
